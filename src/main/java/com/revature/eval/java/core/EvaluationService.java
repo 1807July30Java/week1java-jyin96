@@ -1,11 +1,18 @@
 package com.revature.eval.java.core;
 
 import java.time.temporal.Temporal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javax.sound.midi.Soundbank;
 
 public class EvaluationService {
-
+	
 	/**
 	 * 1. Without using the StringBuilder or StringBuffer class, write a method that
 	 * reverses a String. Example: reverse("example"); -> "elpmaxe"
@@ -30,8 +37,8 @@ public class EvaluationService {
 	 * @return
 	 */
 	public String acronym(String phrase) {
-		// TODO Write an implementation for this method declaration
-		return null;
+		String[] words = phrase.toUpperCase().split("[ -]");
+		return Arrays.stream(words).map(word->word.substring(0,1)).reduce("",(a,b)->a+b);	
 	}
 
 	/**
@@ -85,17 +92,19 @@ public class EvaluationService {
 
 		public boolean isEquilateral() {
 			// TODO Write an implementation for this method declaration
-			return false;
+			return this.sideOne == this.sideTwo && this.sideOne == this.sideThree;
 		}
 
 		public boolean isIsosceles() {
 			// TODO Write an implementation for this method declaration
-			return false;
+			return  this.sideOne == this.sideTwo ||
+					this.sideOne == this.sideThree||
+					this.sideTwo == this.sideThree;
 		}
 
 		public boolean isScalene() {
 			// TODO Write an implementation for this method declaration
-			return false;
+			return !this.isIsosceles();
 		}
 
 	}
@@ -115,11 +124,25 @@ public class EvaluationService {
 	 * @param string
 	 * @return
 	 */
+	Map<Character, Integer> values = new HashMap<Character, Integer>(){
+		{
+			put('A',1); put('E',1); put('I',1); put('O',1); put('U',1);
+			put('L',1); put('N',1); put('R',1); put('S',1); put('T',1);
+			put('D',2); put('G',2); 
+			put('B',3); put('C',3); put('M',3); put('P',3);
+			put('F',4); put('H',4); put('V',4); put('W',4); put('Y',4);
+			put('K',5); 
+			put('J',8); put('X',8);
+			put('Q',10);put('Z',10);
+		}
+	
+	};
 	public int getScrabbleScore(String string) {
 		// TODO Write an implementation for this method declaration
-		return 0;
-	}
+		//System.out.println(values.get('A'));
 
+		return string.toUpperCase().chars().map(c->values.get((char)c)).sum();
+	}
 	/**
 	 * 5. Clean up user-entered phone numbers so that they can be sent SMS messages.
 	 * 
@@ -151,9 +174,12 @@ public class EvaluationService {
 	 * Note: As this exercise only deals with telephone numbers used in
 	 * NANP-countries, only 1 is considered a valid country code.
 	 */
-	public String cleanPhoneNumber(String string) {
+	public String cleanPhoneNumber(String string) throws IllegalArgumentException{
 		// TODO Write an implementation for this method declaration
-		return null;
+		if (!string.matches("1?[-. ]*[(]?[2-9][0-9]{2}[)]?[-. ]*[0-9]{3}[-. ]*[0-9]{4}"))  throw new IllegalArgumentException();
+		string = string.replaceAll("[^0-9]", "");
+		if (string.length() > 10) throw new IllegalArgumentException();
+		return string.substring(string.length()-10);
 	}
 
 	/**
@@ -167,7 +193,12 @@ public class EvaluationService {
 	 */
 	public Map<String, Integer> wordCount(String string) {
 		// TODO Write an implementation for this method declaration
-		return null;
+		String[] words = string.split(" ");
+		Map<String, Integer> counter = new HashMap<String,Integer>();
+		for (String word: words) {
+			counter.put(word, counter.getOrDefault(word, 0)+1);
+		}
+		return counter;
 	}
 
 	/**
@@ -209,8 +240,20 @@ public class EvaluationService {
 		private List<T> sortedList;
 
 		public int indexOf(T t) {
-			// TODO Write an implementation for this method declaration
-			return 0;
+			return bsHelper(0,sortedList.size()-1,t);
+		}
+		public int bsHelper(int min, int max, T target) {
+			if (target.equals(sortedList.get(max))) return max;
+			if (target.equals(sortedList.get(min))) return min;
+			if (min >= max || min+1 == max) {
+				return -1;
+			}
+			int i = (min+max)/2;
+			if (sortedList.get(i).equals(target)){
+				return i;
+			}
+			return ((Comparable)target).compareTo((Comparable)sortedList.get(i))>0  ? bsHelper(i,max,target) : bsHelper(min,i,target);
+			
 		}
 
 		public BinarySearch(List<T> sortedList) {
@@ -245,9 +288,19 @@ public class EvaluationService {
 	 * @param string
 	 * @return
 	 */
+
 	public String toPigLatin(String string) {
 		// TODO Write an implementation for this method declaration
-		return null;
+		return Arrays.stream(string.split(" ")).map(word->wordToPigLatin(word)).reduce("",(a,b)->a+" "+b).trim();
+	}
+	public static String wordToPigLatin(String word) {
+		word = word.replace("qu", "Ǫ");
+		if (word.startsWith("y")) word = "ɏ"+word.substring(1);
+		String[] syllables = word.split("[aeiouy]");
+		return (word.substring(syllables[0].length())+syllables[0]+"ay")
+				.replace("ɏ","y")
+				.replace("Ǫ", "qu");
+		
 	}
 
 	/**
@@ -267,7 +320,14 @@ public class EvaluationService {
 	 */
 	public boolean isArmstrongNumber(int input) {
 		// TODO Write an implementation for this method declaration
-		return false;
+		int digits = (int) Math.log10(input)+1;
+		int sum = 0;
+		int original = input;
+		while(input > 0) {
+			sum+=Math.pow(input%10, digits);
+			input/=10;
+		}
+		return original==sum;
 	}
 
 	/**
@@ -281,9 +341,17 @@ public class EvaluationService {
 	 * @return
 	 */
 	public List<Long> calculatePrimeFactorsOf(long l) {
-		// TODO Write an implementation for this method declaration
-		return null;
+		List<Long> output = new ArrayList<Long>();
+		for (long i=2; i<=Math.sqrt(l);i++) {
+			while (l%i==0) {
+				output.add(i);
+				l/=i;
+			}
+		}
+		if (l != 1) output.add(l);
+		return output;
 	}
+	
 
 	/**
 	 * 11. Create an implementation of the rotational cipher, also sometimes called
@@ -321,7 +389,14 @@ public class EvaluationService {
 
 		public String rotate(String string) {
 			// TODO Write an implementation for this method declaration
-			return null;
+			return string.chars().mapToObj(letter->rotate(letter)).reduce("",(a,b)->a+b);
+			
+			
+		}
+		public String rotate(int letter) {
+			if (65 <= letter && letter <=90) return Character.toString((char) ((letter-65+key)%26+65));
+			if (97 <= letter && letter <=122)return Character.toString((char) ((letter-97+key)%26+97));
+			return Character.toString((char)letter);
 		}
 
 	}
@@ -338,11 +413,24 @@ public class EvaluationService {
 	 * @param i
 	 * @return
 	 */
-	public int calculateNthPrime(int i) {
-		// TODO Write an implementation for this method declaration
-		return 0;
+	public int calculateNthPrime(int n) {
+		// Sieve method. For n>6, the nth prime is less than n(ln n + lnln n)
+		// https://math.stackexchange.com/questions/1270814/bounds-for-n-th-prime
+		if (n < 1) throw new IllegalArgumentException();
+		int UPPER_BOUND = Math.max((int) (n*(Math.log(n)+Math.log(Math.log(n)))),12);
+		boolean[] sieve = new boolean[UPPER_BOUND];
+		for (int i = 2; i<UPPER_BOUND; i++) {
+			if (!sieve[i]) {
+				n-=1; 
+				if (n==0) return i;
+			
+				for (int j = i; j<UPPER_BOUND; j+=i) {
+					sieve[j] = true;
+				}
+			}
+		}
+		return -1;
 	}
-
 	/**
 	 * 13 & 14. Create an implementation of the atbash cipher, an ancient encryption
 	 * system created in the Middle East.
@@ -377,7 +465,8 @@ public class EvaluationService {
 		 */
 		public static String encode(String string) {
 			// TODO Write an implementation for this method declaration
-			return null;
+			string = string.toLowerCase().replaceAll("[^a-z0-9]", "");
+			return atbash(string);
 		}
 
 		/**
@@ -387,8 +476,21 @@ public class EvaluationService {
 		 * @return
 		 */
 		public static String decode(String string) {
-			// TODO Write an implementation for this method declaration
-			return null;
+			// TODO Write an implementation for this method declaration			
+			return atbash(string).replace(" ","");
+		}
+		public static String atbash(String string) {
+			StringBuilder output = new StringBuilder();
+			for (int i =0; i<string.length();i++) {
+				if (i%5==0) output.append(" ");
+				output.append(cipher(string.charAt(i)));
+			}
+			return output.toString().trim();
+		}
+		public static char cipher(char letter) {
+			if (65 <= letter && letter <=90) return ((char) (25-(letter-65)+65));
+			if (97 <= letter && letter <=122)return ((char) (25-(letter-97)+97));
+			return letter;
 		}
 	}
 
@@ -416,6 +518,7 @@ public class EvaluationService {
 	 */
 	public boolean isValidIsbn(String string) {
 		// TODO Write an implementation for this method declaration
+		string = string;
 		return false;
 	}
 
