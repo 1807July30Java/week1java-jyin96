@@ -1,8 +1,17 @@
 package com.revature.eval.java.core;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.Month;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
+import java.time.temporal.UnsupportedTemporalTypeException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -176,6 +185,7 @@ public class EvaluationService {
 	 */
 	public String cleanPhoneNumber(String string) throws IllegalArgumentException{
 		// TODO Write an implementation for this method declaration
+		string = string.trim();
 		if (!string.matches("1?[-. ]*[(]?[2-9][0-9]{2}[)]?[-. ]*[0-9]{3}[-. ]*[0-9]{4}"))  throw new IllegalArgumentException();
 		string = string.replaceAll("[^0-9]", "");
 		if (string.length() > 10) throw new IllegalArgumentException();
@@ -193,7 +203,7 @@ public class EvaluationService {
 	 */
 	public Map<String, Integer> wordCount(String string) {
 		// TODO Write an implementation for this method declaration
-		String[] words = string.split(" ");
+		String[] words = string.toLowerCase().split("[^a-z]+");
 		Map<String, Integer> counter = new HashMap<String,Integer>();
 		for (String word: words) {
 			counter.put(word, counter.getOrDefault(word, 0)+1);
@@ -518,8 +528,18 @@ public class EvaluationService {
 	 */
 	public boolean isValidIsbn(String string) {
 		// TODO Write an implementation for this method declaration
-		string = string;
-		return false;
+		if (!string.matches("[-0-9]*[0-9X]")) return false;
+		string=string.replaceAll("[^0-9X]","");
+		if (string.length()!=10) return false;
+		int sum = 0;
+		for (int i =0; i<10;i++) {
+			try {
+				sum+=Integer.parseInt(string.substring(i,i+1))*(10-i);
+			}catch (NumberFormatException e){
+				sum+=10;
+			}
+		}
+		return sum%11==0;
 	}
 
 	/**
@@ -537,7 +557,10 @@ public class EvaluationService {
 	 */
 	public boolean isPangram(String string) {
 		// TODO Write an implementation for this method declaration
-		return false;
+		Set<Character> counter = new HashSet<Character>();
+		for (char c: string.toLowerCase().replaceAll("[^a-z]","").toCharArray())
+			counter.add(c);
+		return counter.size()==26;
 	}
 
 	/**
@@ -550,9 +573,11 @@ public class EvaluationService {
 	 */
 	public Temporal getGigasecondDate(Temporal given) {
 		// TODO Write an implementation for this method declaration
-		return null;
+		if (!given.isSupported(ChronoUnit.SECONDS)) {
+			given = LocalDateTime.of((LocalDate) given, LocalTime.of(0, 0, 0));
+		}
+		return given.plus(1000000000,ChronoUnit.SECONDS);
 	}
-
 	/**
 	 * 18. Given a number, find the sum of all the unique multiples of particular
 	 * numbers up to but not including that number.
@@ -566,9 +591,19 @@ public class EvaluationService {
 	 * @param set
 	 * @return
 	 */
-	public int getSumOfMultiples(int i, int[] set) {
+	public int getSumOfMultiples(int n, int[] set) {
+		Set <Integer> uniques = new HashSet<Integer>();
+		int sum = 0;
+		for (int num: set) {
+			for (int i = num; i<n; i+=num)
+				if (!uniques.contains(i)) {
+					uniques.add(i);
+					sum+=i;
+				}
+		}
+		
 		// TODO Write an implementation for this method declaration
-		return 0;
+		return sum;
 	}
 
 	/**
@@ -609,7 +644,14 @@ public class EvaluationService {
 	 */
 	public boolean isLuhnValid(String string) {
 		// TODO Write an implementation for this method declaration
-		return false;
+		string = string.replaceAll("\\s+", "");
+		if (string.matches(".*[^0-9 ].*") || string.length() <=1) return false;
+		int sum=0;
+		for (int i =0; i<string.length(); i++) {
+			sum+=(Character.getNumericValue(string.charAt(string.length()-i-1))
+					*((i%2==1)?2:1))%9;
+		}
+		return sum%10 ==0;
 	}
 
 	/**
@@ -640,6 +682,18 @@ public class EvaluationService {
 	 * @return
 	 */
 	public int solveWordProblem(String string) {
+		string = string	.replaceAll("mult", "*")
+						.replaceAll("plus", "+")
+						.replaceAll("minus", "-")
+						.replaceAll("div", "/")
+						.replaceAll("[^-+*/0-9 ]","").trim();
+		String[] words = string.split("\\s+");
+		switch(words[1]) {
+		case "*":return Integer.parseInt(words[0])*Integer.parseInt(words[2]);
+		case "+":return Integer.parseInt(words[0])+Integer.parseInt(words[2]);
+		case "/":return Integer.parseInt(words[0])/Integer.parseInt(words[2]);
+		case "-":return Integer.parseInt(words[0])-Integer.parseInt(words[2]);
+		}
 		// TODO Write an implementation for this method declaration
 		return 0;
 	}
